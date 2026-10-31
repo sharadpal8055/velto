@@ -2,9 +2,12 @@ import { motion } from "motion/react";
 import { AudioLines, ArrowRight } from "lucide-react";
 import { linkWithCredential, signInWithPopup } from "firebase/auth";
 import { auth, provider } from "../utils/firbase";
-import axios from 'axios'
+import { X } from "lucide-react";
+import axios from "axios";
+import { useDispatch } from "react-redux";
+import { setuserdata } from "../redux/userslice";
+import { useState } from "react";
 function GoogleIcon() {
-  
   return (
     <svg viewBox="0 0 48 48" className="h-5 w-5" aria-hidden="true">
       <path
@@ -26,86 +29,144 @@ function GoogleIcon() {
     </svg>
   );
 }
-const SERVERURL='http://localhost:8055/api/auth'
-export default function Auth() {
-  const handleGoogleSignIn = async() => {
+
+const SERVERURL = "http://localhost:8055/api/auth";
+export default function Auth({ isModal = false, onClose }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const dispatch = useDispatch();
+const handleGoogleSignIn = async () => {
   try {
-      const response = await signInWithPopup(auth, provider);
+    setLoading(true);
+    setError("");
 
-      const name = response.user.displayName;
-      const email = response.user.email;
+    const response = await signInWithPopup(auth, provider);
 
-      const result = await axios.post(
-        `${SERVERURL}/google`,
-        { name, email },
-        { withCredentials: true }
-      );
+    const name = response.user.displayName;
+    const email = response.user.email;
 
-      console.log("Google login successful:", result.data);
-      console.log("User:", result.data.user);
+    const result = await axios.post(
+      `${SERVERURL}/google`,
+      { name, email },
+      { withCredentials: true }
+    );
 
-    } catch (error) {
-  console.log(`error while signing in with google ${error}`)
-}
+    dispatch(setuserdata(result.data.user));
 
-  };
+    // Close only when Auth is displayed as a modal.
+    if (isModal) {
+      onClose?.();
+    }
+  } catch (error) {
+    console.error("Google sign-in failed:", error);
+    setError(
+      error.response?.data?.message ||
+      "Unable to sign in. Please try again."
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#f4f4f2] px-5 py-10 font-sans text-[#111]">
-      <motion.section
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="w-full max-w-[420px] rounded-2xl border border-[#e7e7e4] bg-white px-7 py-10 shadow-[0_12px_40px_rgba(0,0,0,0.04)] sm:px-11 sm:py-12"
-      >
-        <motion.a
-          href="/"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.15, duration: 0.4 }}
-          className="mb-12 inline-flex items-center gap-2.5"
-          aria-label="VELTO home"
-        >
-          <AudioLines size={23} strokeWidth={1.8} />
-          <span className="text-lg font-semibold tracking-[0.16em]">VELTO</span>
-        </motion.a>
 
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.4 }}
-        >
-          <h1 className="text-3xl font-semibold tracking-tight">Sign in</h1>
-
-          <p className="mt-2 text-sm leading-6 text-[#777]">
-            Continue to access your dashboard.
-          </p>
-        </motion.div>
-
-        <motion.button
+  <div
+    className={
+      isModal
+        ? "fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4 py-6 backdrop-blur-sm"
+        : "flex min-h-screen items-center justify-center bg-[#f4f4f2] px-5 py-10 font-sans text-[#111]"
+    }
+    onMouseDown={(e) => {
+      if (isModal && e.target === e.currentTarget) {
+        onClose?.();
+      }
+    }}
+  >
+    <motion.section
+      initial={{ opacity: 0, y: 16, scale: isModal ? 0.97 : 1 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className={`relative w-full rounded-2xl border border-[#e7e7e4] bg-white shadow-[0_12px_40px_rgba(0,0,0,0.08)] ${
+        isModal
+          ? "max-w-[410px] px-7 py-8 sm:px-9"
+          : "max-w-[420px] px-7 py-10 sm:px-11 sm:py-12"
+      }`}
+    >
+      {/* Close button - modal only */}
+      {isModal && (
+        <button
           type="button"
-          onClick={handleGoogleSignIn}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.4 }}
-          whileHover={{ y: -1 }}
-          whileTap={{ scale: 0.99 }}
-          className="mt-8 flex h-12 w-full items-center justify-center gap-3 rounded-full border border-[#dedede] bg-white text-sm font-medium transition-colors hover:border-[#aaa] hover:bg-[#fafafa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+          onClick={onClose}
+          aria-label="Close authentication"
+          className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-black"
         >
-          <GoogleIcon />
-          Continue with Google
-          <ArrowRight size={16} className="ml-auto text-[#888]" />
-        </motion.button>
+          <X size={19} />
+        </button>
+      )}
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.45, duration: 0.4 }}
-          className="mt-10 text-center text-[11px] tracking-wide text-[#999]"
+      {/* Branding */}
+      <motion.a
+        href="/"
+        className={`inline-flex items-center gap-2.5 ${
+          isModal ? "mb-7" : "mb-12"
+        }`}
+        aria-label="VELTO home"
+      >
+        <AudioLines size={23} strokeWidth={1.8} />
+        <span className="text-lg font-semibold tracking-[0.16em]">
+          VELTO
+        </span>
+      </motion.a>
+
+      {/* Heading */}
+      <motion.div>
+        <h1
+          className={`font-semibold tracking-tight ${
+            isModal ? "text-2xl" : "text-3xl"
+          }`}
         >
-          MEET YOUR POTENTIAL.
-        </motion.p>
-      </motion.section>
-    </main>
-  );
+          Sign in
+        </h1>
+
+        <p className="mt-2 text-sm leading-6 text-[#777]">
+          Continue to access your dashboard.
+        </p>
+      </motion.div>
+
+      {/* Google sign-in */}
+      <motion.button
+        type="button"
+        onClick={handleGoogleSignIn}
+        disabled={loading}
+        whileHover={{ y: -1 }}
+        whileTap={{ scale: 0.99 }}
+        className="mt-8 flex h-12 w-full items-center justify-center gap-3 rounded-full border border-[#dedede] bg-white text-sm font-medium transition-colors hover:border-[#aaa] hover:bg-[#fafafa] disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <GoogleIcon />
+
+        {loading ? "Signing in..." : "Continue with Google"}
+
+        {!loading && (
+          <ArrowRight size={16} className="ml-auto text-[#888]" />
+        )}
+      </motion.button>
+
+      {/* Error */}
+      {error && (
+        <p className="mt-3 text-xs text-red-500">
+          {error}
+        </p>
+      )}
+
+      {/* Footer */}
+      <motion.p
+        className={`text-center text-[11px] tracking-wide text-[#999] ${
+          isModal ? "mt-7" : "mt-10"
+        }`}
+      >
+        MEET YOUR POTENTIAL.
+      </motion.p>
+    </motion.section>
+  </div>
+);
 }

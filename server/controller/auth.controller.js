@@ -39,6 +39,7 @@ export const googleAuth = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        // credit:user.credit
       },
     });
   } catch (error) {
