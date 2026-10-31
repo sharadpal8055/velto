@@ -1,8 +1,8 @@
 import { motion } from "motion/react";
 import { AudioLines, ArrowRight } from "lucide-react";
-import { signInWithPopup } from "firebase/auth";
+import { linkWithCredential, signInWithPopup } from "firebase/auth";
 import { auth, provider } from "../utils/firbase";
-
+import axios from 'axios'
 function GoogleIcon() {
   
   return (
@@ -26,12 +26,25 @@ function GoogleIcon() {
     </svg>
   );
 }
-
+const SERVERURL='http://localhost:8055/api/auth'
 export default function Auth() {
   const handleGoogleSignIn = async() => {
-try {const response=await signInWithPopup(auth,provider)
-  console.log(response)
-} catch (error) {
+  try {
+      const response = await signInWithPopup(auth, provider);
+
+      const name = response.user.displayName;
+      const email = response.user.email;
+
+      const result = await axios.post(
+        `${SERVERURL}/google`,
+        { name, email },
+        { withCredentials: true }
+      );
+
+      console.log("Google login successful:", result.data);
+      console.log("User:", result.data.user);
+
+    } catch (error) {
   console.log(`error while signing in with google ${error}`)
 }
 
