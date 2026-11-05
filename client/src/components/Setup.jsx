@@ -16,13 +16,14 @@ import {
   AlertCircle,
 } from "lucide-react";
 import axios from "axios";
+import { useSelector } from "react-redux";
 
 function Step1SetUp({ onStart }) {
   const fileInputRef = useRef(null);
-
+  const { userdata } = useSelector((state) => state.user);
   const [role, setRole] = useState("");
   const [experience, setExperience] = useState("");
-  const [mode, setMode] = useState("Technical Interview");
+  const [mode, setMode] = useState("Technical");
   const [resume, setResume] = useState(null);
   const [resumeAnalysis, setResumeAnalysis] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -62,6 +63,7 @@ function Step1SetUp({ onStart }) {
   const removeResume = () => {
     setResume(null);
     setResumeAnalysis(null);
+    setError("");
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -89,13 +91,18 @@ function Step1SetUp({ onStart }) {
         },
       );
 
-      const analysis = response.data?.data?.analysis;
+      const { analysis, resumeText } = response.data?.data || {};
 
-      if (!analysis || typeof analysis !== "object") {
+      if (
+        !analysis ||
+        typeof analysis !== "object" ||
+        Array.isArray(analysis) ||
+        typeof resumeText !== "string"
+      ) {
         throw new Error("Invalid resume analysis received from server.");
       }
 
-      setResumeAnalysis(analysis);
+      setResumeAnalysis({ ...analysis, resumeText });
     } catch (err) {
       console.error("Resume analysis error:", err);
 
@@ -109,55 +116,58 @@ function Step1SetUp({ onStart }) {
     }
   };
 
-  const handleStart = async (e) => {
-    e.preventDefault();
-    setError("");
+const handleStart = async (e) => {
+  e.preventDefault();
+  setError("");
 
-    if (!role.trim() || !experience.trim()) {
-      setError("Please enter your target role and experience.");
-      return;
+  if (!role.trim() || !experience.trim()) {
+    setError("Please enter your target role and experience.");
+    return;
+  }
+
+  if (!userdata) {
+    setError("Please log in before starting an interview.");
+    return;
+  }
+
+  if ((userdata.credit ?? 0) < 50) {
+    setError("You need at least 50 credits to start an interview.");
+    return;
+  }
+
+  if (resume && !resumeAnalysis) {
+    setError("Please analyze your resume before starting the interview.");
+    return;
+  }
+
+  setStarting(true);
+
+  try {
+    const interviewData = {
+      role: role.trim(),
+      experience: experience.trim(),
+      mode,
+      resumeAnalysis: resumeAnalysis || null,
+      resumeText: resumeAnalysis?.resumeText || "",
+    };
+
+    if (typeof onStart !== "function") {
+      throw new Error("Interview start handler is not configured.");
     }
 
-    // Require analysis before starting if a resume was uploaded.
-    if (resume && !resumeAnalysis) {
-      setError("Please analyze your resume before starting the interview.");
-      return;
-    }
+    await onStart(interviewData);
+  } catch (err) {
+    console.error("Start interview error:", err);
 
-    setStarting(true);
-
-    try {
-      const interviewData = {
-        role: role.trim(),
-        experience: experience.trim(),
-        mode,
-        resume: resume
-          ? {
-              name: resume.name,
-              size: resume.size,
-              type: resume.type,
-            }
-          : null,
-        resumeAnalysis,
-        projects: resumeAnalysis?.projects || [],
-        skills: resumeAnalysis?.skills || [],
-        interviewTopics:
-          resumeAnalysis?.projects?.flatMap(
-            (project) => project.interviewTopics || [],
-          ) || [],
-      };
-
-      // Parent component should generate/start the interview using this data.
-      await onStart?.(interviewData);
-    } catch (err) {
-      console.error("Start interview error:", err);
-      setError(
-        err.message || "Could not start the interview. Please try again.",
-      );
-    } finally {
-      setStarting(false);
-    }
-  };
+    setError(
+      err.response?.data?.message ||
+        err.message ||
+        "Could not start the interview. Please try again."
+    );
+  } finally {
+    setStarting(false);
+  }
+};
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F8F9FB] px-4 py-8 sm:px-6 sm:py-10">
@@ -288,8 +298,8 @@ function Step1SetUp({ onStart }) {
                 onChange={(e) => setMode(e.target.value)}
                 className="w-full cursor-pointer rounded-xl border border-gray-200 bg-white px-4 py-3.5 text-sm text-gray-800 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
               >
-                <option value="Technical Interview">Technical Interview</option>
-                <option value="HR Interview">HR Interview</option>
+                <option value="Technical">Technical Interview</option>
+                <option value="HR">HR Interview</option>
               </select>
             </div>
 
@@ -346,6 +356,7 @@ function Step1SetUp({ onStart }) {
                   <button
                     type="button"
                     onClick={removeResume}
+                    disabled={analyzing}
                     className="ml-2 rounded-lg p-2 text-gray-400 transition hover:bg-red-50 hover:text-red-500"
                     aria-label="Remove resume"
                   >
