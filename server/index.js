@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser'
 import User from './model/user.model.js'
 import Authrouter from './routes/auth.route.js'
 import userrouter from './routes/user.route.js'
+import resumerouter from './routes/resume.route.js'
 
 const app=express()
 
@@ -18,7 +19,7 @@ app.use(express.json())
 app.use(cookieParser())
 app.use('/api/auth',Authrouter)
 app.use('/api/user',userrouter)
-
+app.use('/api/resume',resumerouter)
 
 const PORT=process.env.PORT ||8055
 dotenv.config()

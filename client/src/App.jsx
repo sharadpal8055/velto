@@ -6,8 +6,9 @@ import { useEffect } from "react";
 import axios from "axios";
 import { useDispatch } from "react-redux";
 import { setuserdata } from "./redux/userslice";
+import Interviewpage from "./pages/Interviewpage";
 const SERVERURL = import.meta.env.VITE_SERVER_URL;
-
+// import Interviewpage from "./pages/Interviewpage";
 function App() {
   const dispatch=useDispatch()
   useEffect(() => {
@@ -16,10 +17,8 @@ function App() {
         const result = await axios.get(SERVERURL + "/api/user/current-user", {
           withCredentials: true,
         });
-        console.log(result);
         dispatch(setuserdata(result.data.user))
       } catch (error) {
-        console.log(error);
         dispatch(setuserdata(null))
       }
     };
@@ -30,6 +29,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/auth" element={<Auth />} />
+      <Route path="/interviews" element={<Interviewpage/>} />
       {/* <Route path="/interviews" element={<Interviews />} />
 <Route path="/history" element={<History />} /> */}
     </Routes>
