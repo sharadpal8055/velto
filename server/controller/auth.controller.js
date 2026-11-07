@@ -12,23 +12,27 @@ export const googleAuth = async (req, res) => {
       });
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     let user = await User.findOne({
-      email: email.toLowerCase(),
+      email: normalizedEmail,
     });
 
     if (!user) {
       user = await User.create({
-        name,
-        email: email.toLowerCase(),
+        name: name.trim(),
+        email: normalizedEmail,
       });
     }
 
-    const token = generateToken(user._id.toString());
+    const token = generateToken(user._id);
 
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite:
+        process.env.NODE_ENV === "production" ? "none" : "lax",
+      path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -39,7 +43,7 @@ export const googleAuth = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        // credit:user.credit
+        credit: user.credit,
       },
     });
   } catch (error) {
@@ -52,14 +56,14 @@ export const googleAuth = async (req, res) => {
   }
 };
 
-
-
 export const logout = async (req, res) => {
   try {
     res.clearCookie("token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite:
+        process.env.NODE_ENV === "production" ? "none" : "lax",
+      path: "/",
     });
 
     return res.status(200).json({
@@ -67,6 +71,8 @@ export const logout = async (req, res) => {
       message: "Logged out successfully",
     });
   } catch (error) {
+    console.error("Logout error:", error);
+
     return res.status(500).json({
       success: false,
       message: "Logout failed",
