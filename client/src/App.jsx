@@ -7,6 +7,9 @@ import axios from "axios";
 import { useDispatch } from "react-redux";
 import { setuserdata } from "./redux/userslice";
 import Interviewpage from "./pages/Interviewpage";
+import InterviewHistory from "./pages/InterviewHistory";
+import InterviewReport from "./pages/InterviewReport";
+import Pricing from "./pages/Pricing";
 const SERVERURL = import.meta.env.VITE_SERVER_URL;
 // import Interviewpage from "./pages/Interviewpage";
 function App() {
@@ -29,7 +32,10 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/auth" element={<Auth />} />
-      <Route path="/interviews" element={<Interviewpage/>} />
+      <Route path="/interviews" element={<Interviewpage />} />
+      <Route path="/interviews/:interviewId/report" element={<InterviewReport />} />
+      <Route path="/history" element={<InterviewHistory />} />
+      <Route path="/pricing" element={<Pricing />} />
       {/* <Route path="/interviews" element={<Interviews />} />
 <Route path="/history" element={<History />} /> */}
     </Routes>

@@ -1,6 +1,10 @@
 import { ArrowLeft, Award, CheckCircle2 } from "lucide-react";
 
-function Report({ report, onRestart }) {
+function Report({
+  report,
+  onRestart,
+  actionLabel = "Start a new interview",
+}) {
   if (!report) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#F8F9FB] px-4">
@@ -16,6 +20,7 @@ function Report({ report, onRestart }) {
     ["Communication", report.communication],
     ["Correctness", report.correctness],
   ];
+  const isCompleted = report.status === "completed";
 
   return (
     <main className="min-h-screen bg-[#F8F9FB] px-4 py-10 sm:px-6">
@@ -25,8 +30,17 @@ function Report({ report, onRestart }) {
             <Award size={28} />
           </div>
           <h1 className="mt-4 text-3xl font-bold text-gray-950">
-            Interview complete
+            {isCompleted ? "Interview complete" : "Interview report"}
           </h1>
+          <span
+            className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+              isCompleted
+                ? "bg-emerald-50 text-emerald-700"
+                : "bg-amber-50 text-amber-700"
+            }`}
+          >
+            {isCompleted ? "Completed" : "In progress"}
+          </span>
           <p className="mt-2 text-sm text-gray-500">
             {report.role} · {report.experience} · {report.mode}
           </p>
@@ -34,7 +48,9 @@ function Report({ report, onRestart }) {
             {report.finalScore ?? 0}
             <span className="text-lg font-medium text-gray-400">/100</span>
           </p>
-          <p className="mt-2 text-sm text-gray-500">Overall score</p>
+          <p className="mt-2 text-sm text-gray-500">
+            Overall score{!isCompleted && " so far"}
+          </p>
         </div>
 
         <div className="mt-8 grid gap-3 sm:grid-cols-3">
@@ -60,41 +76,65 @@ function Report({ report, onRestart }) {
         <div className="mt-9">
           <h2 className="text-lg font-bold text-gray-900">Question feedback</h2>
           <div className="mt-4 space-y-4">
-            {(report.questionWiseScore || []).map((item, index) => (
-              <article
-                key={item.questionId || index}
-                className="rounded-2xl border border-gray-200 p-5"
-              >
-                <div className="flex items-start gap-3">
-                  <CheckCircle2
-                    size={19}
-                    className="mt-0.5 shrink-0 text-emerald-600"
-                  />
-                  <div className="min-w-0 flex-1">
+            {(report.questionWiseScore || []).map((item, index) => {
+              const isEvaluated = item.status === "evaluated" || isCompleted;
+              return (
+                <article
+                  key={item.questionId || index}
+                  className="rounded-2xl border border-gray-200 p-5"
+                >
+                  <div className="flex items-start gap-3">
+                    {isEvaluated ? (
+                      <CheckCircle2
+                        size={19}
+                        className="mt-0.5 shrink-0 text-emerald-600"
+                      />
+                    ) : (
+                      <span className="mt-0.5 shrink-0 text-xs font-semibold text-amber-600">
+                        Pending
+                      </span>
+                    )}
+                    <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="font-semibold text-gray-900">
                         Question {index + 1}
                       </p>
-                      <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
-                        {item.score ?? 0}/10
-                      </span>
+                      {isEvaluated && (
+                        <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+                          {item.score ?? 0}/10
+                        </span>
+                      )}
                     </div>
                     <p className="mt-2 text-sm leading-6 text-gray-700">
                       {item.question}
                     </p>
-                    <p className="mt-3 text-xs font-semibold text-gray-500">
-                      Your answer
-                    </p>
-                    <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-600">
-                      {item.answer}
-                    </p>
-                    <p className="mt-3 text-sm leading-6 text-gray-600">
-                      {item.feedback}
-                    </p>
+                    {isEvaluated ? (
+                      <>
+                        <p className="mt-3 text-xs font-semibold text-gray-500">
+                          Your answer
+                        </p>
+                        <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-600">
+                          {item.answer}
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-3 text-xs text-gray-500">
+                          <span>Confidence: {item.confidence}/10</span>
+                          <span>Communication: {item.communication}/10</span>
+                          <span>Correctness: {item.correctness}/10</span>
+                        </div>
+                        <p className="mt-3 text-sm leading-6 text-gray-600">
+                          {item.feedback}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="mt-3 text-sm text-gray-500">
+                        This question has not been answered yet.
+                      </p>
+                    )}
                   </div>
                 </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         </div>
 
@@ -104,7 +144,7 @@ function Report({ report, onRestart }) {
           className="mx-auto mt-8 flex items-center justify-center gap-2 rounded-full bg-gray-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-indigo-600"
         >
           <ArrowLeft size={17} />
-          Start a new interview
+          {actionLabel}
         </button>
       </section>
     </main>

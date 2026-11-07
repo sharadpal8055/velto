@@ -713,6 +713,123 @@ ${answer.trim()}
   }
 };
 
+export const getMyInterviews = async (req, res) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Please login first.",
+      });
+    }
+
+    const interviews = await Interview.find({ userId: req.userId })
+      .select("role experience mode finalScore status questions.status createdAt updatedAt")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      data: interviews.map((interview) => ({
+        ...interview,
+        totalQuestions: interview.questions.length,
+        attemptedQuestions: interview.questions.filter(
+          (question) => question.status === "evaluated"
+        ).length,
+      })),
+    });
+  } catch (error) {
+    console.error("Get Interview History Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch interview history.",
+    });
+  }
+};
+
+export const getInterviewReport = async (req, res) => {
+  try {
+    const { interviewId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(interviewId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid interview ID.",
+      });
+    }
+
+    if (!req.userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Please login first.",
+      });
+    }
+
+    const interview = await Interview.findOne({
+      _id: interviewId,
+      userId: req.userId,
+    }).select("-resumeText");
+
+    if (!interview) {
+      return res.status(404).json({
+        success: false,
+        message: "Interview not found.",
+      });
+    }
+
+    const evaluatedQuestions = interview.questions.filter(
+      (question) => question.status === "evaluated"
+    );
+    const attemptedQuestions = evaluatedQuestions.length;
+    const average = (field) =>
+      attemptedQuestions
+        ? Number(
+            (
+              evaluatedQuestions.reduce(
+                (sum, question) => sum + (question[field] || 0),
+                0
+              ) / attemptedQuestions
+            ).toFixed(1)
+          )
+        : 0;
+    const report = {
+      interviewId: interview._id,
+      role: interview.role,
+      experience: interview.experience,
+      mode: interview.mode,
+      finalScore: interview.finalScore,
+      confidence: average("confidence"),
+      communication: average("communication"),
+      correctness: average("correctness"),
+      attemptedQuestions,
+      totalQuestions: interview.questions.length,
+      status: interview.status,
+      createdAt: interview.createdAt,
+      questionWiseScore: interview.questions.map((question) => ({
+        questionId: question._id,
+        question: question.question,
+        difficulty: question.difficulty,
+        answer: question.answer,
+        score: question.score || 0,
+        feedback: question.feedback || "",
+        confidence: question.confidence || 0,
+        communication: question.communication || 0,
+        correctness: question.correctness || 0,
+        status: question.status,
+      })),
+    };
+
+    return res.status(200).json({
+      success: true,
+      data: report,
+    });
+  } catch (error) {
+    console.error("Get Interview Report Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch interview report.",
+    });
+  }
+};
 
 
 export const finishInterview = async (req, res) => {
