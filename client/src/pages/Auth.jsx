@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { AudioLines, ArrowRight } from "lucide-react";
-import { linkWithCredential, signInWithPopup } from "firebase/auth";
+import { signInWithPopup } from "firebase/auth";
 import { auth, provider } from "../utils/firbase";
 import { X } from "lucide-react";
 import axios from "axios";
@@ -8,6 +8,7 @@ import { useDispatch } from "react-redux";
 import { setuserdata } from "../redux/userslice";
 import { useState } from "react";
 import { API_URL } from "../config/api";
+import { useNavigate } from "react-router-dom";
 
 function GoogleIcon() {
   return (
@@ -31,12 +32,13 @@ function GoogleIcon() {
     </svg>
   );
 }
-
 export default function Auth({ isModal = false, onClose }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const dispatch = useDispatch();
-const handleGoogleSignIn = async () => {
+  const navigate = useNavigate();
+
+  const handleGoogleSignIn = async () => {
   try {
     setLoading(true);
     setError("");
@@ -52,11 +54,16 @@ const handleGoogleSignIn = async () => {
       { withCredentials: true }
     );
 
+    if (!result.data?.success || !result.data?.user) {
+      throw new Error("Authentication succeeded, but the account response was invalid.");
+    }
+
     dispatch(setuserdata(result.data.user));
 
-    // Close only when Auth is displayed as a modal.
     if (isModal) {
       onClose?.();
+    } else {
+      navigate("/");
     }
   } catch (error) {
     console.error("Google sign-in failed:", error);
