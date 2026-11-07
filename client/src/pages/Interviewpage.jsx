@@ -5,9 +5,9 @@ import { useDispatch, useSelector } from "react-redux";
 import Setup from "../components/Setup";
 import Interview from "../components/Interview";
 import Report from "../components/Report";
+import Navbar from "../components/Navbar";
 import { setuserdata } from "../redux/userslice";
-
-const API_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:8055";
+import { API_URL } from "../config/api";
 const STORAGE_KEY = "velto_interview_progress";
 
 const getSavedProgress = () => {
@@ -115,6 +115,7 @@ const Interviewpage = () => {
 
   return (
     <div>
+      <Navbar />
       {step === 1 && <Setup onStart={startInterview} />}
 
       {step === 2 && interviewdata && (

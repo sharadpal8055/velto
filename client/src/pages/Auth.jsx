@@ -7,6 +7,8 @@ import axios from "axios";
 import { useDispatch } from "react-redux";
 import { setuserdata } from "../redux/userslice";
 import { useState } from "react";
+import { API_URL } from "../config/api";
+
 function GoogleIcon() {
   return (
     <svg viewBox="0 0 48 48" className="h-5 w-5" aria-hidden="true">
@@ -30,7 +32,6 @@ function GoogleIcon() {
   );
 }
 
-const SERVERURL = "http://localhost:8055/api/auth";
 export default function Auth({ isModal = false, onClose }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -46,7 +47,7 @@ const handleGoogleSignIn = async () => {
     const email = response.user.email;
 
     const result = await axios.post(
-      `${SERVERURL}/google`,
+      `${API_URL}/api/auth/google`,
       { name, email },
       { withCredentials: true }
     );

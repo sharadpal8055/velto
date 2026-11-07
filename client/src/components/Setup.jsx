@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { useSelector } from "react-redux";
+import { API_URL } from "../config/api";
 
 function Step1SetUp({ onStart }) {
   const fileInputRef = useRef(null);
@@ -29,8 +30,6 @@ function Step1SetUp({ onStart }) {
   const [analyzing, setAnalyzing] = useState(false);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState("");
-
-  const API_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:8055";
 
   const features = [
     { icon: UserRound, title: "Choose Role & Experience" },

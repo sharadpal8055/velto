@@ -10,14 +10,14 @@ import Interviewpage from "./pages/Interviewpage";
 import InterviewHistory from "./pages/InterviewHistory";
 import InterviewReport from "./pages/InterviewReport";
 import Pricing from "./pages/Pricing";
-const SERVERURL = import.meta.env.VITE_SERVER_URL;
+import { API_URL } from "./config/api";
 // import Interviewpage from "./pages/Interviewpage";
 function App() {
   const dispatch=useDispatch()
   useEffect(() => {
     const getuser = async () => {
       try {
-        const result = await axios.get(SERVERURL + "/api/user/current-user", {
+        const result = await axios.get(`${API_URL}/api/user/current-user`, {
           withCredentials: true,
         });
         dispatch(setuserdata(result.data.user))

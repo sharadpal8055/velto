@@ -6,9 +6,7 @@ import { auth, provider } from "../utils/firbase";
 import { useDispatch } from "react-redux";
 import axios from "axios";
 import { setuserdata } from "../redux/userslice";
-
-const SERVER_URL =
-  import.meta.env.VITE_SERVER_URL || "http://localhost:8055";
+import { API_URL } from "../config/api";
 
 function GoogleIcon() {
   return (
@@ -49,7 +47,7 @@ const AuthModel = ({ isOpen, onClose }) => {
       const email = response.user.email;
 
       const result = await axios.post(
-        `${SERVER_URL}/api/auth/google`,
+        `${API_URL}/api/auth/google`,
         { name, email },
         { withCredentials: true }
       );

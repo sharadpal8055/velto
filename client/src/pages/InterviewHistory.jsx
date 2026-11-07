@@ -3,8 +3,7 @@ import axios from "axios";
 import { ArrowRight, Clock3, FileText, LoaderCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-
-const API_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:8055";
+import { API_URL } from "../config/api";
 
 const formatDate = (date) =>
   new Intl.DateTimeFormat(undefined, {

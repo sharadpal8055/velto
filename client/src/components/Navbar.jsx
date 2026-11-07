@@ -16,7 +16,7 @@ import {
 
 import { clearUserData } from "../redux/userslice";
 import Auth from "../pages/Auth";
-const API_URL = import.meta.env.VITE_SERVER_URL;
+import { API_URL } from "../config/api";
 
 const Navbar = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);

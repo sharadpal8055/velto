@@ -17,9 +17,7 @@ import {
 import femaleVideo from "../assets/female-ai.mp4";
 import maleVideo from "../assets/male-ai.mp4";
 import Timer from "./Timer";
-
-const API_URL =
-  import.meta.env.VITE_SERVER_URL || "http://localhost:8055";
+import { API_URL } from "../config/api";
 
 const Step2Interview = ({ interviewdata, onFinish }) => {
   const {
@@ -342,6 +340,41 @@ const Step2Interview = ({ interviewdata, onFinish }) => {
   };
 
   // ------------------------------------------
+  // Finish interview and generate report
+  // ------------------------------------------
+
+  const finishInterview = useCallback(async () => {
+    if (isFinishing) return;
+    setIsFinishing(true);
+    setError("");
+
+    stopMicrophone();
+    stopSpeech();
+
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/resume/finish-interview`,
+        { interviewId },
+        { withCredentials: true }
+      );
+
+      const report = response.data?.data || response.data;
+
+      if (onFinish) {
+        onFinish(report);
+      }
+    } catch (err) {
+      console.error("Interview completion failed:", err);
+      setError(
+        err.response?.data?.message ||
+          "Unable to finish the interview. Please try again."
+      );
+    } finally {
+      setIsFinishing(false);
+    }
+  }, [interviewId, isFinishing, onFinish, stopMicrophone, stopSpeech]);
+
+  // ------------------------------------------
   // Submit answer and get AI evaluation
   // ------------------------------------------
 
@@ -403,41 +436,6 @@ const Step2Interview = ({ interviewdata, onFinish }) => {
   useEffect(() => {
     submitAnswerRef.current = handleSubmitAnswer;
   }, [handleSubmitAnswer]);
-
-  // ------------------------------------------
-  // Finish interview and generate report
-  // ------------------------------------------
-
-  const finishInterview = async () => {
-    if (isFinishing) return;
-    setIsFinishing(true);
-    setError("");
-
-    stopMicrophone();
-    stopSpeech();
-
-    try {
-      const response = await axios.post(
-        `${API_URL}/api/resume/finish-interview`,
-        { interviewId },
-        { withCredentials: true }
-      );
-
-      const report = response.data?.data || response.data;
-
-      if (onFinish) {
-        onFinish(report);
-      }
-    } catch (err) {
-      console.error("Interview completion failed:", err);
-      setError(
-        err.response?.data?.message ||
-          "Unable to finish the interview. Please try again."
-      );
-    } finally {
-      setIsFinishing(false);
-    }
-  };
 
   const handleNextQuestion = () => {
     if (!evaluation) return;

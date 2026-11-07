@@ -4,8 +4,7 @@ import { LoaderCircle } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Report from "../components/Report";
-
-const API_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:8055";
+import { API_URL } from "../config/api";
 
 const InterviewReport = () => {
   const { interviewId } = useParams();
